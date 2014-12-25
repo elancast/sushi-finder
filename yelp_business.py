@@ -11,5 +11,11 @@ class YelpBusiness:
         self.latitude = data['location']['coordinate']['latitude']
         self.longitude = data['location']['coordinate']['longitude']
 
+        self.reviews = []
+        self.menu = []
+
     def set_reviews(self, reviews):
         self.reviews = reviews
+
+    def set_menu(self, menu):
+        self.menu = menu

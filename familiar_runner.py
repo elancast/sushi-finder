@@ -2,6 +2,8 @@ from scorer import score_business
 from yelp_api import YelpAPI
 
 nice_restaurants = [
+    'sushi-yasuda-new-york',
+    'sakagura-new-york',
     'tenroku-sushi-san-francisco',
     'daigo-sushi-san-francisco',
     'sushi-masu-los-angeles',

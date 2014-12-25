@@ -9,6 +9,7 @@ from yelp_business import YelpBusiness
 # 4 lines consisting of yelp: consumer key, consumer secret, token, token secret
 BUSINESS_URL = 'http://api.yelp.com/v2/business/%s'
 FILE = '.yelpkeys.secret'
+MENU_URL = 'http://www.yelp.com/menu/%s'
 RATING_SORT = 2
 SEARCH_URL = 'http://api.yelp.com/v2/search'
 YELP_URL = 'http://www.yelp.com/biz/%s'
@@ -32,6 +33,7 @@ class YelpAPI:
         for item in data['businesses']:
             business = YelpBusiness(item)
             business.set_reviews(self._get_reviews(business.id))
+            business.set_menu(self._get_menu(business.id))
             list.append(business)
         return list
 
@@ -40,6 +42,7 @@ class YelpAPI:
         data = self._open_api_url(url)
         business = YelpBusiness(data)
         business.set_reviews(self._get_reviews(business.id))
+        business.set_menu(self._get_menu(business.id))
         return business
 
     def _get_search_url(self):
@@ -64,6 +67,22 @@ class YelpAPI:
                                    consumer,
                                    token)
         return oauth_request.to_url()
+
+    def _get_menu(self, id):
+        try:
+            s = open_page(self._br, MENU_URL % id)
+        except:
+            return []
+
+        items = []
+        while True:
+            (item, s) = html_helper.advance_and_find(s, 'menu-item-details"', '<h3>', '</h3>')
+            if item == None:
+                (item, s) = html_helper.advance_and_find(s, 'menu-item-details ', '<h3>', '</h3>')
+                if item == None:
+                    break
+            items.append(html_helper.strip_tags(item))
+        return items
 
     def _open_api_url(self, url):
         resp = urllib2.urlopen(url)
