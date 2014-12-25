@@ -45,7 +45,7 @@ class MenuScoreFactor(ScoreFactor):
     def get_contribution(self, score, reviews_len):
         return score * self.weight
 
-BAD_MENU_WORDS = ['teriyaki', ' don']
+BAD_MENU_WORDS = ['teriyaki', ' don', 'chicken']
 def _score_by_elimination(menu_items):
     count = 0
     for item in menu_items:

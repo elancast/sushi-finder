@@ -29,8 +29,8 @@ class YelpAPI:
         self._token = lines[2]
         self._token_secret = lines[3]
 
-    def get_sushi_restaurants(self):
-        data = self._open_api_url(self._get_search_url())
+    def get_sushi_restaurants(self, location, offset=0):
+        data = self._open_api_url(self._get_search_url(location, offset))
         list = []
         for item in data['businesses']:
             business = YelpBusiness(item)
@@ -47,11 +47,12 @@ class YelpAPI:
         business.set_menu(self._get_menu(business.id))
         return business
 
-    def _get_search_url(self):
+    def _get_search_url(self, location, offset):
         data = {
-            'term': 'sushi',
-            'location': 'Manhattan, NY',
+            'term': 'Sushi Bars',
+            'location': location,
             'sort': RATING_SORT,
+            'offset': offset,
             }
         return self._get_authorized_url(SEARCH_URL, data)
         
@@ -95,6 +96,7 @@ class YelpAPI:
         resp = urllib2.urlopen(url)
         s = resp.read()
         resp.close()
+        s = s.decode('utf-8', 'replace').encode('ascii', 'replace')
         return json.loads(s)
 
     def _get_reviews(self, id):

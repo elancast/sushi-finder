@@ -1,0 +1,5 @@
+TODO:
+- refactor score factors to be more flexible
+- penalty for fusion
+- penalty for not having certain items (uni, other items)
+- contribute to score by overall review

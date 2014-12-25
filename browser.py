@@ -14,7 +14,7 @@ def get_browser():
   return br
 
 def open_page(br, url):
-  resp = br.open(url)
+  resp = br.open(url.encode('utf8'))
   s = resp.read()
   resp.close()
   return s.decode('utf-8', 'replace').encode('ascii', 'replace')
