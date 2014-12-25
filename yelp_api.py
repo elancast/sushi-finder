@@ -3,6 +3,7 @@ import oauth2
 import urllib2
 
 from browser import get_browser, open_page
+from db_store import DBStore
 import html_helper
 from yelp_business import YelpBusiness
 
@@ -17,6 +18,7 @@ YELP_URL = 'http://www.yelp.com/biz/%s'
 class YelpAPI:
     def __init__(self):
         self._br = get_browser()
+        self._db = DBStore()
         self._init_yelp_keys_stuff()
 
     def _init_yelp_keys_stuff(self):
@@ -69,10 +71,14 @@ class YelpAPI:
         return oauth_request.to_url()
 
     def _get_menu(self, id):
+        cached_items = self._db.get_menu_items(id)
+        if cached_items != None:
+            return cached_items
+
         try:
             s = open_page(self._br, MENU_URL % id)
         except:
-            return []
+            s = ''
 
         items = []
         while True:
@@ -82,6 +88,7 @@ class YelpAPI:
                 if item == None:
                     break
             items.append(html_helper.strip_tags(item))
+        self._db.save_menu_items(id, items)
         return items
 
     def _open_api_url(self, url):
@@ -91,6 +98,10 @@ class YelpAPI:
         return json.loads(s)
 
     def _get_reviews(self, id):
+        cached_reviews = self._db.get_reviews(id)
+        if len(cached_reviews) > 0:
+            return cached_reviews
+
         s = open_page(self._br, YELP_URL % id)
         reviews = []
 
@@ -99,10 +110,11 @@ class YelpAPI:
             (stars, s) = html_helper.advance_and_find(s, 'itemprop="ratingValue"', 'content="', '"')
             if stars == None:
                 break
-            stars = float(stars)
+            stars = int(float(stars))
             
             (descr, s) = html_helper.advance_and_find(s, 'itemprop="description"', '>', '</p')
             reviews.append((stars, descr))
+        self._db.save_reviews(id, reviews)
         return reviews
 
 if __name__ == '__main__':
