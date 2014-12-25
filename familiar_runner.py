@@ -14,6 +14,12 @@ nice_restaurants = [
     ]
 
 api = YelpAPI()
+
+businesses = []
 for biz in nice_restaurants:
     business = api.get_restaurant_details(biz)
-    print '%s: %.3f' % (business.name, score_business(business))
+    businesses.append((score_business(business), business))
+
+businesses = sorted(businesses, reverse=True)
+for (score, biz) in businesses:
+    print '%s%.3f: %s' % (' ' if score >= 0 else '', score, biz.name)

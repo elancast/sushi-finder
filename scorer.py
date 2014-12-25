@@ -1,13 +1,17 @@
 
 class ScoreFactor:
-    def matches_review(self, rating, text):
-        return False
+    def get_score_contribution(self, business):
+        score = self._get_numerator(business) * 1.0 / self._get_denominator(business)
+        return score * self.weight
 
-    def get_menu_items_score(self, menu_items):
-        return False
+    def get_score_weight(self, business):
+        return max(0, self.weight)
 
-    def get_weight(self):
-        return self.weight if self.weight >= 0 else 0
+    def _get_denominator(self):
+        return 1
+
+    def _get_numerator(self):
+        raise RuntimeError('This should be implemented')
 
 class ReviewScoreFactor(ScoreFactor):
     def __init__(self,
@@ -21,7 +25,17 @@ class ReviewScoreFactor(ScoreFactor):
         self.needs_bad_rating = needs_bad_rating
         self.weight = weight
 
-    def matches_review(self, rating, text):
+    def _get_numerator(self, business):
+        total = 0
+        for review in business.reviews:
+            if self._matches_review(review[0], review[1]):
+                total += 1
+        return total
+
+    def _get_denominator(self, business):
+        return len(business.reviews)
+
+    def _matches_review(self, rating, text):
         match = self.phrase in text.lower()
         is_good_rating = rating >= 3.9
         if self.needs_good_rating:
@@ -30,51 +44,36 @@ class ReviewScoreFactor(ScoreFactor):
             return match and not is_good_rating
         return match
 
-    def get_contribution(self, score, reviews_len):
-        matching_fraction = score * 1.0 / reviews_len
-        return matching_fraction * self.weight
-
 class MenuScoreFactor(ScoreFactor):
-    def __init__(self, fn, weight):
+    def __init__(self, words, weight):
+        self.words = words
         self.weight = weight
-        self.fn = fn
 
-    def get_menu_items_score(self, menu_items):
-        return self.fn(menu_items)
+    def _get_numerator(self, business):
+        total = 0
+        for item in business.menu:
+            item = item.lower()
+            for word in self.words:
+                if word in item:
+                    total += 1
+                    break
+        return total
 
-    def get_contribution(self, score, reviews_len):
-        return score * self.weight
+    def _get_denominator(self, business):
+        return max(1, len(business.menu))
 
 BAD_MENU_WORDS = ['teriyaki', ' don', 'chicken']
-def _score_by_elimination(menu_items):
-    count = 0
-    for item in menu_items:
-        menu_item = item.lower()
-        for word in BAD_MENU_WORDS:
-            if menu_item.find(word) >= 0:
-                count += 1
-                break
-    return 0 if len(menu_items) == 0 else count * 1.0 / len(menu_items)
 
 FACTORS = [
-    ReviewScoreFactor(' fresh', 1, needs_good_rating=True),
+    ReviewScoreFactor(' fresh', 1.5, needs_good_rating=True),
     ReviewScoreFactor(' fresh', -1, needs_bad_rating=True),
-    ReviewScoreFactor('tradition', .5, needs_good_rating=True),
-    MenuScoreFactor(_score_by_elimination, -1),
+    ReviewScoreFactor('tradition', 1, needs_good_rating=True),
+    MenuScoreFactor(BAD_MENU_WORDS, -1),
     ]
 
 def score_business(business):
-    scores = [0 for i in range(len(FACTORS))]
-    for i in range(len(FACTORS)):
-        factor = FACTORS[i]
-        for review in business.reviews:
-            if factor.matches_review(review[0], review[1]):
-                scores[i] += 1
-        scores[i] += factor.get_menu_items_score(business.menu)
-
     (total, weights) = (0, 0)
-    for i in range(len(FACTORS)):
-        factor = FACTORS[i]
-        total += factor.get_contribution(scores[i], len(business.reviews))
-        weights += factor.get_weight()
-    return total / weights
+    for (i, factor) in enumerate(FACTORS):
+        total += factor.get_score_contribution(business)
+        weights += factor.get_score_weight(business)
+    return total * 1.0 / weights

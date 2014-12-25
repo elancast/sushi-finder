@@ -4,7 +4,7 @@ from scorer import score_business
 from yelp_api import YelpAPI
 
 DEFAULT_LOCATION = 'Manhattan, NY'
-NAME_LEN = 20
+NAME_LEN = 30
 
 parser = argparse.ArgumentParser(description='Good sushi finder')
 parser.add_argument(
