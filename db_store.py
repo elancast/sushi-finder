@@ -19,7 +19,9 @@ class DBStore:
             (biz_id, )
             )
         row = cursor.fetchone()
-        return None if row == None else row[0].split(';')
+        if row == None: return None
+        if row[0] == '': return []
+        return row[0].split(';')
 
     def save_reviews(self, biz_id, reviews):
         reviews = map(lambda r: (biz_id, int(r[0]), r[1]), reviews)

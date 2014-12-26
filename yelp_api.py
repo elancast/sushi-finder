@@ -13,6 +13,7 @@ FILE = '.yelpkeys.secret'
 MENU_URL = 'http://www.yelp.com/menu/%s'
 RATING_SORT = 2
 SEARCH_URL = 'http://api.yelp.com/v2/search'
+YELP_BASE = 'http://www.yelp.com'
 YELP_URL = 'http://www.yelp.com/biz/%s'
 
 class YelpAPI:
@@ -30,6 +31,7 @@ class YelpAPI:
         self._token_secret = lines[3]
 
     def get_sushi_restaurants(self, location, offset=0):
+        print self._get_search_url(location, offset)
         data = self._open_api_url(self._get_search_url(location, offset))
         list = []
         for item in data['businesses']:
@@ -55,7 +57,7 @@ class YelpAPI:
             'offset': offset,
             }
         return self._get_authorized_url(SEARCH_URL, data)
-        
+
     def _get_authorized_url(self, url, data = {}):
         oauth_request = oauth2.Request('GET', url, {})
         data['oauth_nonce'] = oauth2.generate_nonce()
@@ -81,15 +83,26 @@ class YelpAPI:
         except:
             s = ''
 
+        items = set(self._get_menu_page(s))
+        if 'class="sub-menus">' in s:
+            while True:
+                (link, s) = html_helper.advance_and_find(s, 'sub-menu', 'href="', '"')
+                if link == None: break
+
+                sub_menu = open_page(self._br, YELP_BASE + link)
+                items = items.union(self._get_menu_page(sub_menu))
+
+        if '' in items: items.remove('')
+        self._db.save_menu_items(id, items)
+        return map(lambda i: i, items)
+
+    def _get_menu_page(self, s):
         items = []
         while True:
-            (item, s) = html_helper.advance_and_find(s, 'menu-item-details"', '<h3>', '</h3>')
+            (item, s) = html_helper.advance_and_find(s, 'class="media-story"', '<h3>', '</h3>')
             if item == None:
-                (item, s) = html_helper.advance_and_find(s, 'menu-item-details ', '<h3>', '</h3>')
-                if item == None:
-                    break
-            items.append(html_helper.strip_tags(item))
-        self._db.save_menu_items(id, items)
+                break
+            items.append(html_helper.strip_tags(item).strip())
         return items
 
     def _open_api_url(self, url):
@@ -113,7 +126,7 @@ class YelpAPI:
             if stars == None:
                 break
             stars = int(float(stars))
-            
+
             (descr, s) = html_helper.advance_and_find(s, 'itemprop="description"', '>', '</p')
             reviews.append((stars, descr))
         self._db.save_reviews(id, reviews)

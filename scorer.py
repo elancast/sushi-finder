@@ -7,7 +7,7 @@ class ScoreFactor:
     def get_score_weight(self, business):
         return max(0, self.weight)
 
-    def _get_denominator(self):
+    def _get_denominator(self, business):
         return 1
 
     def _get_numerator(self):
@@ -52,23 +52,56 @@ class MenuScoreFactor(ScoreFactor):
     def _get_numerator(self, business):
         total = 0
         for item in business.menu:
-            item = item.lower()
             for word in self.words:
-                if word in item:
+                if word in item.lower():
                     total += 1
                     break
-        return total
+        return total * .05
 
-    def _get_denominator(self, business):
-        return max(1, len(business.menu))
+class NoMenuPenalty(ScoreFactor):
+    def __init__(self, weight):
+        self.weight = weight
 
-BAD_MENU_WORDS = ['teriyaki', ' don', 'chicken']
+    def _get_numerator(self, business):
+        return 0 if len(business.menu) > 0 else -1
+
+class CategoryPenalty(ScoreFactor):
+    def __init__(self, weight):
+        self.weight = weight
+
+    def _get_numerator(self, business):
+        if 'thai' in business.categories:
+            return 1
+        return 0
+
+class BadRatingPenalty(ScoreFactor):
+    def __init__(self, weight):
+        self.weight = weight
+
+    def _get_numerator(self, business):
+        if business.reviews_count < 25: return 1
+        if business.reviews_count < 50: return .5
+        if business.rating < 3.9:       return .5
+        return 0
+
+BAD_MENU_WORDS = ['teriyaki', ' don', 'chicken', 'soba', 'udon', 'fried']
+GOOD_MENU_WORDS = [
+    'king salmon',
+    'hotate', 'scallop',
+    'saba', 'mackerel',
+    'umimasu', 'trout',
+    'uni', 'sea urchin',
+    ]
 
 FACTORS = [
-    ReviewScoreFactor(' fresh', 1.5, needs_good_rating=True),
+    ReviewScoreFactor(' fresh', 1, needs_good_rating=True),
     ReviewScoreFactor(' fresh', -1, needs_bad_rating=True),
-    ReviewScoreFactor('tradition', 1, needs_good_rating=True),
-    MenuScoreFactor(BAD_MENU_WORDS, -1),
+    ReviewScoreFactor('tradition', .5, needs_good_rating=True),
+    MenuScoreFactor(BAD_MENU_WORDS, -.5),
+    NoMenuPenalty(.25),
+    CategoryPenalty(-.5),
+    MenuScoreFactor(GOOD_MENU_WORDS, .5),
+    BadRatingPenalty(-.5)
     ]
 
 def score_business(business):
@@ -76,4 +109,5 @@ def score_business(business):
     for (i, factor) in enumerate(FACTORS):
         total += factor.get_score_contribution(business)
         weights += factor.get_score_weight(business)
-    return total * 1.0 / weights
+    # return total * 1.0 / weights
+    return total

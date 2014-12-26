@@ -24,6 +24,12 @@ parser.add_argument(
     default=10,
     help='Number of restaurants to consider',
     )
+parser.add_argument(
+    '--rafi',
+    dest='text_output',
+    default=False,
+    help='Give this a value if you\'re outputting for text',
+    )
 
 args = parser.parse_args()
 
@@ -41,4 +47,5 @@ options = map(lambda biz: (score_business(biz), biz), options)
 options = sorted(options, reverse=True)
 for (score, biz) in options:
     chrs = [' ' if i >= len(biz.name) else biz.name[i] for i in range(NAME_LEN)]
-    print '%s%.3f: %s     %s' % (' ' if score >= 0 else '', score, ''.join(chrs), biz.url)
+    url = biz.url if args.text_output == False else '\n    %s' % biz.url
+    print '%s%.3f: %s     %s' % (' ' if score >= 0 else '', score, ''.join(chrs), url)

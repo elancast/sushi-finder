@@ -11,6 +11,7 @@ nice_restaurants = [
     'yuba-new-york-2',
     'o-toro-sushi-san-francisco',
     'sushi-of-gari-tribeca-new-york-2',
+    'saru-sushi-bar-san-francisco',
     ]
 
 api = YelpAPI()

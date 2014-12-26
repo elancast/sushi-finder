@@ -3,3 +3,18 @@ TODO:
 - penalty for fusion
 - penalty for not having certain items (uni, other items)
 - contribute to score by overall review
+
+
+ISSUES WITH MENU:
+- need to look at all menus
+- missing mixed details" 'details ' items
+
+
+SILLY IDEA: Similarity and dissimilarity to known ones
+How it'll work: vectors of normalized word counts
+|Training - New| = score of similarity
+
+T: [ 1, 2, 0, 3 ] => [ .167, .333, 0, .5 ]
+N: [ 0, 1, 0, 0 ] => [    0,  .25, 0,  0 ]
+
+http://www.cs.princeton.edu/courses/archive/spring12/cos435/Notes/search_refine_rec_topost.pdf
