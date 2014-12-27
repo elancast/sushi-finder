@@ -4,9 +4,6 @@ class ScoreFactor:
         score = self._get_numerator(business) * 1.0 / self._get_denominator(business)
         return score * self.weight
 
-    def get_score_weight(self, business):
-        return max(0, self.weight)
-
     def _get_denominator(self, business):
         return 1
 
@@ -63,7 +60,7 @@ class NoMenuPenalty(ScoreFactor):
         self.weight = weight
 
     def _get_numerator(self, business):
-        return 0 if len(business.menu) > 0 else 1
+        return int(len(business.menu) == 0)
 
 class CategoryPenalty(ScoreFactor):
     def __init__(self, weight):
@@ -97,15 +94,15 @@ FACTORS = [
     ReviewScoreFactor(' fresh', 1, needs_good_rating=True),
     ReviewScoreFactor(' fresh', -1, needs_bad_rating=True),
     ReviewScoreFactor('tradition', .5, needs_good_rating=True),
-    MenuScoreFactor(BAD_MENU_WORDS, -.5),
-    NoMenuPenalty(-.25),
-    CategoryPenalty(-.5),
+    ReviewScoreFactor(' roll', -.25, needs_good_rating=True),
+
     MenuScoreFactor(GOOD_MENU_WORDS, .5),
-    BadRatingPenalty(-.5)
+    MenuScoreFactor(BAD_MENU_WORDS, -.5),
+
+    BadRatingPenalty(-.5),
+    CategoryPenalty(-.5),
+    NoMenuPenalty(-.25),
     ]
 
 def score_business(business):
-    return reduce(
-        lambda a, b: a + b,
-        map(lambda i: i.get_score_contribution(business), FACTORS),
-        )
+    return sum(map(lambda i: i.get_score_contribution(business), FACTORS))

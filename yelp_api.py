@@ -53,7 +53,7 @@ class YelpAPI:
         data = {
             'term': 'Sushi Bars',
             'location': location,
-            'sort': RATING_SORT,
+            # 'sort': RATING_SORT,
             'offset': offset,
             }
         return self._get_authorized_url(SEARCH_URL, data)
