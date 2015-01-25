@@ -33,6 +33,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+def fix_length(s, n):
+    chrs = [' ' if i >= len(s) else s[i] for i in range(n)]
+    return ''.join(chrs)
+
 location = args.city
 if args.neighborhood != None:
     location = '%s, %s' % (args.neighborhood, DEFAULT_LOCATION)
@@ -48,4 +52,10 @@ options = sorted(options, reverse=True)
 for (score, biz) in options:
     chrs = [' ' if i >= len(biz.name) else biz.name[i] for i in range(NAME_LEN)]
     url = biz.url if args.text_output == False else '\n    %s' % biz.url
-    print '%s%.3f: %s     %s' % (' ' if score >= 0 else '', score, ''.join(chrs), url)
+    print '%s%.3f: %s    %s  %s' % (
+        ' ' if score >= 0 else '',
+        score,
+        fix_length(biz.name, NAME_LEN),
+        fix_length(biz.get_dollars(), 5),
+        url
+        )

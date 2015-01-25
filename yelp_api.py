@@ -36,7 +36,10 @@ class YelpAPI:
         list = []
         for item in data['businesses']:
             business = YelpBusiness(item)
-            business.set_reviews(self._get_reviews(business.id))
+
+            (reviews, price) = self._get_more_details(business.id)
+            business.set_reviews(reviews)
+            business.set_price_level(price)
             business.set_menu(self._get_menu(business.id))
             list.append(business)
         return list
@@ -45,7 +48,10 @@ class YelpAPI:
         url = self._get_authorized_url(BUSINESS_URL % id)
         data = self._open_api_url(url)
         business = YelpBusiness(data)
-        business.set_reviews(self._get_reviews(business.id))
+
+        (reviews, price) = self._get_more_details(business.id)
+        business.set_reviews(reviews)
+        business.set_price_level(price)
         business.set_menu(self._get_menu(business.id))
         return business
 
@@ -112,14 +118,17 @@ class YelpAPI:
         s = s.decode('utf-8', 'replace').encode('ascii', 'replace')
         return json.loads(s)
 
-    def _get_reviews(self, id):
+    def _get_more_details(self, id):
         cached_reviews = self._db.get_reviews(id)
-        if len(cached_reviews) > 0:
-            return cached_reviews
+        cached_price_level = self._db.get_price_level(id)
+        if len(cached_reviews) > 0 and cached_price_level != None:
+            return (cached_reviews, cached_price_level)
 
         s = open_page(self._br, YELP_URL % id)
-        reviews = []
+        (dollars, s) = html_helper.advance_and_find(s, 'itemprop="priceRange"', '>', '<')
+        price_level = len(dollars)
 
+        reviews = []
         s = s[s.index('<h2>Recommended Reviews'):]
         while True:
             (stars, s) = html_helper.advance_and_find(s, 'itemprop="ratingValue"', 'content="', '"')
@@ -129,8 +138,10 @@ class YelpAPI:
 
             (descr, s) = html_helper.advance_and_find(s, 'itemprop="description"', '>', '</p')
             reviews.append((stars, descr))
+
         self._db.save_reviews(id, reviews)
-        return reviews
+        self._db.save_price_level(id, price_level)
+        return (reviews, price_level)
 
 if __name__ == '__main__':
     YelpAPI().get_sushi_restaurants()

@@ -12,11 +12,20 @@ class YelpBusiness:
         self.latitude = data['location']['coordinate']['latitude']
         self.longitude = data['location']['coordinate']['longitude']
 
+        self.price_level = 0
         self.reviews = []
         self.menu = []
+
+    def set_price_level(self, level):
+        self.price_level = level
 
     def set_reviews(self, reviews):
         self.reviews = reviews
 
     def set_menu(self, menu):
         self.menu = menu
+
+    def get_dollars(self):
+        if self.price_level <= 0:
+            return '?'
+        return ''.join(['$' for i in range(self.price_level)])
